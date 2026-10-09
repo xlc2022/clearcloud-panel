@@ -39,3 +39,26 @@ configs, provisioned Grafana dashboards, and Home Assistant config exports.
 
 Home Assistant VM up with the YoLink and iQua integrations. Confirming the
 iQua 2 login works is the one open unknown.
+
+## UX decisions
+
+- Two surfaces: a glance board on a photo-frame sized display, and a
+  comprehensive view for phones and computers.
+- Glance board is a Home Assistant dashboard in kiosk mode, not Grafana.
+  Preferred hardware is an Amazon Fire tablet running Fully Kiosk Browser;
+  a Nest Hub via Home Assistant Cast is the fallback. One home page with an
+  alert takeover, touch to drill in, auto-return to home after a minute.
+  Seasonal profiles are separate dashboard views. Anyone in the household
+  can edit it through the Home Assistant UI editor.
+- Comprehensive view splits into looking and acting. Grafana holds the deep
+  dashboards (overview, water, network, security, weather and fields,
+  infrastructure) and is used mostly from computers. The Home Assistant
+  companion app is the phone surface: push alerts with actions, controls
+  such as the well valve and softener regeneration, and the same dashboards.
+- Grafana panels may be embedded in Home Assistant pages where history is
+  wanted on the glance board.
+- A custom web panel is held in reserve and only built if the Home Assistant
+  kiosk falls short in practice.
+- Access is local network plus Tailscale. Tailscale add-on on Home Assistant,
+  Tailscale on the Docker VM advertising the farm LAN as a subnet route, and
+  Tailscale HTTPS certificates for clean URLs. No ports opened on the WAN.
