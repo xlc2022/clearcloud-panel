@@ -18,11 +18,29 @@ configs, provisioned Grafana dashboards, and Home Assistant config exports.
 
 - Home Assistant OS runs as a VM on the existing Proxmox host. It owns device
   integrations and automation logic.
-- A separate Debian VM or LXC runs Docker Compose with Mosquitto (MQTT),
-  VictoriaMetrics (time series), Grafana (dashboards), and Prometheus-style
-  exporters. Grafana dashboards are provisioned from JSON in this repo.
-- Home Assistant writes sensor history to VictoriaMetrics; Grafana reads from
-  VictoriaMetrics only.
+- A separate Debian VM or LXC runs Docker Compose with four services: the
+  panel, VictoriaMetrics (time series), Grafana (dashboards), and Mosquitto
+  (MQTT). Addresses between them are fixed container names. Grafana
+  dashboards and its VictoriaMetrics datasource are provisioned from this
+  repo. Grafana reads from VictoriaMetrics only.
+- Everything the user would configure is configured in the panel's GUI.
+  No address or credential lives in a file, flag, or environment variable
+  a person has to edit. The only exceptions are the panel's own listen port
+  and the Docker VM's IP. Home Assistant's own integrations are configured
+  in Home Assistant's GUI, which satisfies the rule.
+- Consequence: the panel backend runs the collectors. No standalone
+  exporters. It streams Home Assistant entity state over the websocket API
+  into VictoriaMetrics, polls the Omada, Proxmox, and TrueNAS APIs, polls
+  the Pharos bridges over SNMP, and subscribes to Mosquitto for Blue Iris
+  events. Targets and credentials come from the Integrations page, stored
+  encrypted in the panel's SQLite database with a key generated on first
+  run.
+- First run shows a setup wizard: admin password, Home Assistant
+  connection, Grafana connection. Every integration has a Test button.
+- The panel reverse-proxies Grafana so embedded panels are same-origin and
+  there is one login.
+- Backend is Python (FastAPI) serving a built static frontend. Frontend
+  framework is a subagent-level choice.
 
 ## Device inventory and integration paths
 
@@ -78,8 +96,8 @@ iQua 2 login works is the one open unknown.
     network has 30+ devices, so lists need search, filters, and show-more.
   - Brand name in the UI is "Clear Cloud Farm". Page and panel titles use
     Title Case. Dark theme, amber accent, blue reserved for water.
-  - The app is one container next to Grafana on the Docker VM, with a
-    small backend for the Home Assistant API and Grafana embedding.
+  - The app is one container next to Grafana on the Docker VM. Its
+    backend hosts the collectors, the settings API, and Grafana proxying.
 - Access is local network plus Tailscale. Tailscale add-on on Home Assistant,
   Tailscale on the Docker VM advertising the farm LAN as a subnet route, and
   Tailscale HTTPS certificates for clean URLs. No ports opened on the WAN.
