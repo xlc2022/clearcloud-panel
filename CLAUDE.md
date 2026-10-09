@@ -45,14 +45,16 @@ iQua 2 login works is the one open unknown.
 - Two surfaces: a glance board on a photo-frame sized display, and a
   comprehensive view for phones and computers.
 - Glance board is a Home Assistant dashboard in kiosk mode, not Grafana.
-  Preferred hardware is an Amazon Fire tablet running Fully Kiosk Browser;
-  a Nest Hub via Home Assistant Cast is the fallback. One home page with an
+  Preferred hardware is an existing iPad locked with Guided Access; an
+  Amazon Fire tablet with Fully Kiosk Browser or a Nest Hub via Home
+  Assistant Cast are alternatives. One home page with an
   alert takeover, touch to drill in, auto-return to home after a minute.
   Seasonal profiles are separate dashboard views. Anyone in the household
   can edit it through the Home Assistant UI editor.
 - Comprehensive view splits into looking and acting. Grafana holds the deep
   dashboards (overview, water, network, security, weather and fields,
-  infrastructure) and is used mostly from computers. The Home Assistant
+  infrastructure) and is used from computers and iPads. Grafana is not
+  replaced by Home Assistant; it is the comprehensive web view. The Home Assistant
   companion app is the phone surface: push alerts with actions, controls
   such as the well valve and softener regeneration, and the same dashboards.
 - Grafana panels may be embedded in Home Assistant pages where history is
