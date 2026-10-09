@@ -59,8 +59,27 @@ iQua 2 login works is the one open unknown.
   such as the well valve and softener regeneration, and the same dashboards.
 - Grafana panels may be embedded in Home Assistant pages where history is
   wanted on the glance board.
-- A custom web panel is held in reserve and only built if the Home Assistant
-  kiosk falls short in practice.
+- The comprehensive view is a custom web app, the "panel", with its own
+  sidebar. It embeds Grafana panels by URL and adds configuration screens
+  that Grafana cannot host. Wireframe (approved as a starting point):
+  https://claude.ai/artifact/BZ6E4Xq8eszJCYZLKTBtAn
+  - Sidebar sections: Monitor (Overview, Water, Weather and Fields,
+    Security, Network, Infrastructure, Events) and Configure (Thresholds
+    and Alerts, Devices, Glance Board, Notifications, Integrations).
+    Footer shows reachability of Home Assistant, Grafana, MQTT, Tailscale.
+  - The global time range picker drives embedded Grafana charts. Summary
+    tiles may carry their own Today / 7 days / 30 days toggle.
+  - Thresholds are Home Assistant helpers. The settings screens are forms
+    over those helpers, so automations read changes live and the glance
+    board and phone app see the same values. No separate config store
+    for thresholds.
+  - The Devices settings page is the one registry mapping MAC or IP to a
+    friendly name, location, and category. Every other page uses it. The
+    network has 30+ devices, so lists need search, filters, and show-more.
+  - Brand name in the UI is "Clear Cloud Farm". Page and panel titles use
+    Title Case. Dark theme, amber accent, blue reserved for water.
+  - The app is one container next to Grafana on the Docker VM, with a
+    small backend for the Home Assistant API and Grafana embedding.
 - Access is local network plus Tailscale. Tailscale add-on on Home Assistant,
   Tailscale on the Docker VM advertising the farm LAN as a subnet route, and
   Tailscale HTTPS certificates for clean URLs. No ports opened on the WAN.
