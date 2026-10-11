@@ -1,0 +1,109 @@
+# Clear Cloud Farm stack for the Docker VM.
+#
+# Four services on one internal network, addressed by container name:
+#   panel            http://panel:8080           the only service a browser talks to
+#   victoriametrics  http://victoriametrics:8428 time series, written by the panel's collectors
+#   grafana          http://grafana:3000/grafana/ reached only through the panel's proxy
+#   mosquitto        mqtt://mosquitto:1883        also published on the host for Blue Iris
+#
+# Nothing here needs editing. The only knob is PANEL_PORT (default 8080),
+# optionally set in a .env file next to this one. Every other address and
+# credential is configured in the panel's GUI.
+
+name: clearcloud
+
+services:
+  panel:
+    build: ./panel
+    container_name: panel
+    restart: unless-stopped
+    ports:
+      - "${PANEL_PORT:-8080}:8080"
+    volumes:
+      # SQLite database and the encryption key generated on first run.
+      - panel-data:/data
+      # Mosquitto's password file. The panel writes it when MQTT users are
+      # set in the GUI; the broker reloads it on change.
+      - mosquitto-auth:/mosquitto-auth
+    depends_on:
+      victoriametrics:
+        condition: service_healthy
+      grafana:
+        condition: service_healthy
+      mosquitto:
+        condition: service_started
+
+  victoriametrics:
+    image: victoriametrics/victoria-metrics:v1.128.0
+    container_name: victoriametrics
+    restart: unless-stopped
+    command:
+      - -storageDataPath=/storage
+      - -retentionPeriod=5y
+      - -httpListenAddr=:8428
+    volumes:
+      - vm-data:/storage
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8428/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+
+  grafana:
+    image: grafana/grafana:12.2.0
+    container_name: grafana
+    restart: unless-stopped
+    environment:
+      # Served under /grafana/ so the panel can proxy it same-origin.
+      GF_SERVER_ROOT_URL: "%(protocol)s://%(domain)s/grafana/"
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+      GF_SECURITY_ALLOW_EMBEDDING: "true"
+      # One login: the panel authenticates the user and forwards the name in
+      # X-WEBAUTH-USER. Grafana has no host port, so only containers on this
+      # network can reach it and send that header.
+      GF_AUTH_PROXY_ENABLED: "true"
+      GF_AUTH_PROXY_HEADER_NAME: X-WEBAUTH-USER
+      GF_AUTH_PROXY_HEADER_PROPERTY: username
+      GF_AUTH_PROXY_AUTO_SIGN_UP: "true"
+      GF_AUTH_PROXY_ENABLE_LOGIN_TOKEN: "false"
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+      GF_AUTH_BASIC_ENABLED: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "false"
+      GF_NEWS_NEWS_FEED_ENABLED: "false"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana-dashboards:ro
+    depends_on:
+      victoriametrics:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/grafana/api/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+
+  mosquitto:
+    image: eclipse-mosquitto:2.0.22
+    container_name: mosquitto
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "/mosquitto/entrypoint.sh"]
+    ports:
+      # Blue Iris runs in its own VM and publishes here.
+      - "1883:1883"
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./mosquitto/entrypoint.sh:/mosquitto/entrypoint.sh:ro
+      - mosquitto-data:/mosquitto/data
+      - mosquitto-auth:/mosquitto/auth
+
+volumes:
+  panel-data:
+  vm-data:
+  grafana-data:
+  mosquitto-data:
+  mosquitto-auth:

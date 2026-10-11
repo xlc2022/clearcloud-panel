@@ -9,3 +9,4 @@ dist/
 *.tsbuildinfo
 # Local panel state: database and generated encryption key
 panel/backend/data/
+.env

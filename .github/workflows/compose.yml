@@ -1,0 +1,43 @@
+name: Compose stack
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  stack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate compose.yaml
+        run: docker compose config -q
+
+      - name: Build and start the full stack
+        run: docker compose up -d --build --wait --wait-timeout 300
+
+      - name: Check the panel answers on the published port
+        run: curl -fsS http://127.0.0.1:8080/api/setup/state
+
+      - name: Check Grafana auth proxy and datasource
+        run: |
+          curl_net() { docker run --rm --network clearcloud_default curlimages/curl:8.11.1 -s "$@"; }
+          test "$(curl_net -o /dev/null -w '%{http_code}' http://grafana:3000/grafana/api/datasources)" = 401
+          curl_net -H 'X-WEBAUTH-USER: admin' \
+            'http://grafana:3000/grafana/api/datasources/proxy/uid/victoriametrics/api/v1/query?query=1' \
+            | grep -q '"status":"success"'
+
+      - name: Check Mosquitto refuses anonymous clients
+        run: |
+          docker run --rm --network clearcloud_default eclipse-mosquitto:2.0.22 \
+            mosquitto_pub -h mosquitto -t test -m x 2>&1 | tee out.txt || true
+          grep -q 'connection was refused' out.txt
+
+      - name: Logs
+        if: failure()
+        run: docker compose logs
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
