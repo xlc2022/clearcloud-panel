@@ -17,7 +17,7 @@ Nothing else is configured in files.
 
 | Service | Internal address | Published |
 |---|---|---|
-| panel | `http://panel:8000` | `PANEL_PORT` (8080) |
+| panel | `http://panel:8080` | `PANEL_PORT` (8080) |
 | victoriametrics | `http://victoriametrics:8428` | no |
 | grafana | `http://grafana:3000/grafana/` | no, proxied by the panel |
 | mosquitto | `mqtt://mosquitto:1883` | 1883, for Blue Iris |
