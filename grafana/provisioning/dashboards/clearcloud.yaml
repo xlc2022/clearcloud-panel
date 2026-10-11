@@ -1,0 +1,14 @@
+apiVersion: 1
+
+# Dashboards are JSON files in grafana/dashboards/ in this repo. Subfolders
+# become Grafana folders. Edits made in the Grafana UI are not saved back;
+# change the JSON here instead.
+providers:
+  - name: clearcloud
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    updateIntervalSeconds: 30
+    options:
+      path: /var/lib/grafana-dashboards
+      foldersFromFilesStructure: true
