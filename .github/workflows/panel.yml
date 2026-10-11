@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   backend:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: panel/backend
@@ -35,7 +35,7 @@ jobs:
         run: .venv/bin/pytest -q
 
   frontend:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: panel/frontend
@@ -52,7 +52,7 @@ jobs:
       - run: npm run build
 
   image:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: [backend, frontend]
     steps:
       - uses: actions/checkout@v4
