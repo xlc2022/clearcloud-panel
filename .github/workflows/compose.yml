@@ -14,8 +14,11 @@ jobs:
       - name: Validate compose.yaml
         run: docker compose config -q
 
-      - name: Start VictoriaMetrics, Grafana and Mosquitto
-        run: docker compose up -d --wait --wait-timeout 180 victoriametrics grafana mosquitto
+      - name: Build and start the full stack
+        run: docker compose up -d --build --wait --wait-timeout 300
+
+      - name: Check the panel answers on the published port
+        run: curl -fsS http://127.0.0.1:8080/api/setup/state
 
       - name: Check Grafana auth proxy and datasource
         run: |

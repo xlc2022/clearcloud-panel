@@ -1,1 +1,12 @@
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+node_modules/
+dist/
+*.tsbuildinfo
+# Local panel state: database and generated encryption key
+panel/backend/data/
 .env

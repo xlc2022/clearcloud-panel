@@ -4,6 +4,12 @@
 set -eu
 
 PASSWD=/mosquitto/auth/passwd
+# The panel container runs as this uid. It replaces the password file by
+# writing a temp file and renaming it, so it needs to own the directory.
+PANEL_UID=10001
+
+chown "$PANEL_UID" /mosquitto/auth
+chmod 0755 /mosquitto/auth
 
 if [ ! -f "$PASSWD" ]; then
   : > "$PASSWD"
